@@ -4,7 +4,9 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\RelationManagers;
+use App\Models\Country;
 use App\Models\Employee;
+use App\Models\State;
 use Filament\Forms;
 use Filament\Forms\Components\Card;
 use Filament\Forms\Components\DatePicker;
@@ -31,9 +33,18 @@ class EmployeeResource extends Resource
             ->schema([
                 Card::make()->schema([
                     Select::make("country_id")
-                        ->relationship('country', 'name')->required(),
+                        ->label('Country')
+                        ->options(Country::all()->pluck('name', 'id')->toArray())
+                        ->reactive()
+                        ->afterStateUpdated(fn (callable $set) => $set('state_id', null)),
                     Select::make("state_id")
-                        ->relationship('state', 'name')->required(),
+                        ->label('State')
+                        ->options(function (callable $get) {
+                            $country = Country::find($get('country_id'));
+                            return $country?->states?->pluck('name', 'id')?->toArray()
+                                ?? State::all()->pluck('name', 'id');
+                        })
+                        ->reactive(),
                     Select::make("city_id")
                         ->relationship('city', 'name')->required(),
                     Select::make("department_id")
