@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\RelationManagers;
+use App\Models\City;
 use App\Models\Country;
 use App\Models\Employee;
 use App\Models\State;
@@ -44,9 +45,16 @@ class EmployeeResource extends Resource
                             return $country?->states?->pluck('name', 'id')?->toArray()
                                 ?? State::all()->pluck('name', 'id');
                         })
-                        ->reactive(),
+                        ->reactive()
+                        ->afterStateUpdated(fn (callable $set) => $set('city_id', null)),
                     Select::make("city_id")
-                        ->relationship('city', 'name')->required(),
+                        ->label('City')
+                        ->options(function (callable $get) {
+                            $state = State::find($get('state_id'));
+                            return $state?->cities?->pluck('name', 'id')?->toArray()
+                                ?? City::all()->pluck('name', 'id');
+                        })
+                        ->reactive(),
                     Select::make("department_id")
                         ->relationship('department', 'name')->required(),
 
